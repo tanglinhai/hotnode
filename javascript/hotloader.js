@@ -8,13 +8,13 @@ spawn = require('child_process').spawn;
 fs = require('fs');
 
 util = require('util');
-
+path = require('path');
 watch = require('watch');
 
 exports.HotLoader = (function() {
 
   function _Class(args, extName, launcher) {
-    var arg, extOptions, i, launcherOptions, match, _i, _j, _len, _len1, _ref, _ref1;
+    var arg, extOptions, i, launcherOptions, match, _i, _j, _len, _len1, _ref, _ref1, exculdePaths;
     this.extName = extName;
     this.launcher = launcher;
     this.args = args;
@@ -25,6 +25,19 @@ exports.HotLoader = (function() {
     launcherOptions = this.args.filter(function(arg) {
       return arg.match(/^-l=(.*)$/);
     });
+    exculdePaths = this.args.filter(function(arg) {
+      return arg.match(/^-exclude=(.*)$/);
+    });
+    if(exculdePaths && exculdePaths.length > 0){
+      exculdePaths = exculdePaths[0].match(/^-exclude=(.*)$/)[1].split(',');
+      for(var i=0;i<exculdePaths.length;i++){
+        exculdePaths[i] = exculdePaths[i].replace(/\\/g, "/");
+        if(exculdePaths[i].indexOf('/') == 0){
+          exculdePaths[i] = exculdePaths[i].substring(1, exculdePaths[i].length-1);
+        }
+      }
+    }
+    this.exculdePaths = exculdePaths;
     if (extOptions.length > 0 && (match = extOptions[extOptions.length - 1].match(/^-t=(.*)/))) {
       this.extName = match[1];
       _ref = this.passedArguments;
@@ -83,6 +96,12 @@ exports.HotLoader = (function() {
   _Class.prototype.run = function() {
     var _this = this;
     watch.watchTree('./', function(f, curr, prev) {
+      if(typeof f === 'string'){
+        f = f.replace(/\\/g, '/');
+        if(f.indexOf(_this.exculdePaths[0]) === 0){
+          return;
+        }
+      }
       var regex;
       regex = "\." + _this.extName + "$";
       if (RegExp(regex).test(f)) {
