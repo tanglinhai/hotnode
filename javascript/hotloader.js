@@ -98,8 +98,10 @@ exports.HotLoader = (function() {
     watch.watchTree('./', function(f, curr, prev) {
       if(typeof f === 'string'){
         f = f.replace(/\\/g, '/');
-        if(f.indexOf(_this.exculdePaths[0]) === 0){
-          return;
+        for(var i=0;i<_this.exculdePaths.length;i++){
+          if(f.indexOf(_this.exculdePaths[i]) === 0){
+            return;
+          }
         }
       }
       var regex;
